@@ -12,6 +12,7 @@ def f1(p_num, p_den, r_num, r_den, beta=1):
     r = 0 if r_den == 0 else r_num / float(r_den)
     return 0 if p + r == 0 else (1 + beta * beta) * p * r / (beta * beta * p + r)
 
+
 class CorefEvaluator(object):
     def __init__(self):
         self.evaluators = [Evaluator(m) for m in (muc, b_cubed, ceafe)]
@@ -31,6 +32,7 @@ class CorefEvaluator(object):
 
     def get_prf(self):
         return self.get_precision(), self.get_recall(), self.get_f1()
+
 
 class Evaluator(object):
     def __init__(self, metric, beta=1):
