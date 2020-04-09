@@ -9,4 +9,5 @@ glove*.txt.filtered
 combined-320.txt
 combined-320.txt.filtered
 *.v*_*_conll
+*.conll
 *.hdf5

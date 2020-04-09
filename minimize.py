@@ -79,15 +79,13 @@ class DocumentState(object):
             "doc_key": self.doc_key,
             "sentences": self.sentences,
             "speakers": self.speakers,
-            "constituents": self.span_dict_to_list(self.constituents),
-            "ner": self.span_dict_to_list(self.ner),
+            #"constituents": self.span_dict_to_list(self.constituents),
+            #"ner": self.span_dict_to_list(self.ner),
             "clusters": merged_clusters
         }
 
 
-def normalize_word(word, language):
-    if language == "arabic":
-        word = word[:word.find("#")]
+def normalize_word(word):
     if word == "/." or word == "/?":
         return word[1:]
     else:
@@ -126,7 +124,7 @@ def handle_bit(word_index, bit, stack, spans):
         spans[current_span] = label
 
 
-def handle_line(line, document_state, language, labels, stats):
+def handle_line(line, document_state, labels, stats):
     begin_document_match = re.match(conll.BEGIN_DOCUMENT_REGEX, line)
     if begin_document_match:
         document_state.assert_empty()
@@ -139,16 +137,16 @@ def handle_line(line, document_state, language, labels, stats):
         stats["num_clusters"] += len(finalized_state["clusters"])
         stats["num_mentions"] += sum(len(c)
                                      for c in finalized_state["clusters"])
-        labels["{}_const_labels".format(language)].update(
-            l for _, _, l in finalized_state["constituents"])
-        labels["ner"].update(l for _, _, l in finalized_state["ner"])
+        # labels["const_labels"].update(
+        #     l for _, _, l in finalized_state["constituents"])
+        # labels["ner"].update(l for _, _, l in finalized_state["ner"])
         return finalized_state
     else:
         row = line.split()
         if len(row) == 0:
-            stats["max_sent_len_{}".format(language)] = max(
-                len(document_state.text), stats["max_sent_len_{}".format(language)])
-            stats["num_sents_{}".format(language)] += 1
+            stats["max_sent_len"] = max(
+                len(document_state.text), stats["max_sent_len"])
+            stats["num_sents"] += 1
             document_state.sentences.append(tuple(document_state.text))
             del document_state.text[:]
             document_state.speakers.append(tuple(document_state.text_speakers))
@@ -157,7 +155,7 @@ def handle_line(line, document_state, language, labels, stats):
         assert len(row) >= 12
 
         doc_key = conll.get_doc_key(row[0], row[1])
-        word = normalize_word(row[3], language)
+        word = normalize_word(row[3])
         parse = row[5]
         speaker = row[9]
         ner = row[10]
@@ -192,9 +190,8 @@ def handle_line(line, document_state, language, labels, stats):
         return None
 
 
-def minimize_partition(name, language, extension, labels, stats):
-    input_path = "{}.{}.{}".format(name, language, extension)
-    output_path = "{}.{}.jsonlines".format(name, language)
+def minimize_partition(input_path, labels, stats):
+    output_path = "{}.jsonlines".format(os.path.splitext(input_path)[0])
     count = 0
     print("Minimizing {}".format(input_path))
     with open(input_path, "r") as input_file:
@@ -202,7 +199,7 @@ def minimize_partition(name, language, extension, labels, stats):
             document_state = DocumentState()
             for line in input_file.readlines():
                 document = handle_line(
-                    line, document_state, language, labels, stats)
+                    line, document_state, labels, stats)
                 if document is not None:
                     output_file.write(json.dumps(document))
                     output_file.write("\n")
@@ -211,16 +208,14 @@ def minimize_partition(name, language, extension, labels, stats):
     print("Wrote {} documents to {}".format(count, output_path))
 
 
-def minimize_language(language, labels, stats):
-    minimize_partition("dev", language, "v4_gold_conll", labels, stats)
-    minimize_partition("train", language, "v4_gold_conll", labels, stats)
-    #minimize_partition("test", language, "v4_gold_conll", labels, stats)
-
-
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        sys.exit(
+            "Usage: {} input file".format(sys.argv[0]))
+    input_path = sys.argv[1]
     labels = collections.defaultdict(set)
     stats = collections.defaultdict(int)
-    minimize_language("dutch", labels, stats)
+    minimize_partition(input_path, labels, stats)
     for k, v in labels.items():
         print("{} = [{}]".format(k, ", ".join(
             "\"{}\"".format(label) for label in v)))

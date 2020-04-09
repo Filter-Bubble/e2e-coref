@@ -17,7 +17,8 @@ COREF_RESULTS_REGEX = re.compile(
 
 
 def get_doc_key(doc_id, part):
-    return "{}_{}".format(doc_id, int(part))
+    return doc_id
+    #return "{}_{}".format(doc_id, int(part))
 
 
 def output_conll(input_file, output_file, predictions):
