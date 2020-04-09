@@ -25,9 +25,9 @@ def get_char_vocab(input_filenames, output_filename):
 
 def get_char_vocab_language(language):
     get_char_vocab(["{}.{}.jsonlines".format(partition, language) for partition in (
-        "train", "dev", "test")], "char_vocab.{}.txt".format(language))
+        "train",
+        #"dev", "test"
+        )], "char_vocab.{}.txt".format(language))
 
 
-get_char_vocab_language("english")
-get_char_vocab_language("chinese")
-get_char_vocab_language("arabic")
+get_char_vocab_language("dutch")

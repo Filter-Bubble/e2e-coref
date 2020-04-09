@@ -6,5 +6,7 @@ conll-2012
 char_vocab*.txt
 glove*.txt
 glove*.txt.filtered
+combined-320.txt
+combined-320.txt.filtered
 *.v*_*_conll
 *.hdf5
