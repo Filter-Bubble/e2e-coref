@@ -79,8 +79,6 @@ class DocumentState(object):
             "doc_key": self.doc_key,
             "sentences": self.sentences,
             "speakers": self.speakers,
-            #"constituents": self.span_dict_to_list(self.constituents),
-            #"ner": self.span_dict_to_list(self.ner),
             "clusters": merged_clusters
         }
 
@@ -152,24 +150,17 @@ def handle_line(line, document_state, labels, stats):
             document_state.speakers.append(tuple(document_state.text_speakers))
             del document_state.text_speakers[:]
             return None
-        assert len(row) >= 12
+        assert len(row) >= 4
 
-        doc_key = conll.get_doc_key(row[0], row[1])
-        word = normalize_word(row[3])
-        parse = row[5]
-        speaker = row[9]
-        ner = row[10]
+        doc_key = conll.get_doc_key(row[0], 0) # TODO: use part?
+        word = normalize_word(row[2])
+        speaker = 'UNKNOWN'
         coref = row[-1]
 
         word_index = len(document_state.text) + sum(len(s)
                                                     for s in document_state.sentences)
         document_state.text.append(word)
         document_state.text_speakers.append(speaker)
-
-        handle_bit(word_index, parse, document_state.const_stack,
-                   document_state.constituents)
-        handle_bit(word_index, ner, document_state.ner_stack,
-                   document_state.ner)
 
         if coref != "-":
             for segment in coref.split("|"):

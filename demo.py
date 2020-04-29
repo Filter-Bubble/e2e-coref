@@ -1,8 +1,8 @@
 from __future__ import absolute_import
-from nltk.tokenize import sent_tokenize, word_tokenize
 from __future__ import division
 from __future__ import print_function
 
+from nltk.tokenize import sent_tokenize, word_tokenize
 from six.moves import input
 import tensorflow as tf
 import coref_model as cm
