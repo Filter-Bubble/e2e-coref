@@ -307,16 +307,6 @@ class CorefModel(object):
             context_emb_list.append(aggregated_char_emb)
             head_emb_list.append(aggregated_char_emb)
 
-        if not self.lm_file:
-            elmo_module = hub.Module("https://tfhub.dev/google/elmo/2")
-            lm_embeddings = elmo_module(
-                inputs={"tokens": tokens, "sequence_len": text_len},
-                signature="tokens", as_dict=True)
-            # [num_sentences, max_sentence_length, 512]
-            word_emb = lm_embeddings["word_emb"]
-            lm_emb = tf.stack([tf.concat([word_emb, word_emb], -1),
-                               lm_embeddings["lstm_outputs1"],
-                               lm_embeddings["lstm_outputs2"]], -1)  # [num_sentences, max_sentence_length, 1024, 3]
         lm_emb_size = util.shape(lm_emb, 2)
         lm_num_layers = util.shape(lm_emb, 3)
         with tf.variable_scope("lm_aggregation"):
