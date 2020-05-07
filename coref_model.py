@@ -604,9 +604,9 @@ class CorefModel(object):
                 with tf.variable_scope("bw_cell"):
                     cell_bw = util.CustomLSTMCell(
                         self.config["contextualization_size"], num_sentences, self.lstm_dropout)
-                state_fw = tf.contrib.rnn.LSTMStateTuple(tf.tile(cell_fw.initial_state.c, [
+                state_fw = tf.nn.rnn_cell.LSTMStateTuple(tf.tile(cell_fw.initial_state.c, [
                                                          num_sentences, 1]), tf.tile(cell_fw.initial_state.h, [num_sentences, 1]))
-                state_bw = tf.contrib.rnn.LSTMStateTuple(tf.tile(cell_bw.initial_state.c, [
+                state_bw = tf.nn.rnn_cell.LSTMStateTuple(tf.tile(cell_bw.initial_state.c, [
                                                          num_sentences, 1]), tf.tile(cell_bw.initial_state.h, [num_sentences, 1]))
 
                 (fw_outputs, bw_outputs), _ = tf.nn.bidirectional_dynamic_rnn(

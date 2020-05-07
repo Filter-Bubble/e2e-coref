@@ -1,4 +1,5 @@
 tensorflow
+tensorflow_hub
 h5py
 nltk
 pyhocon
