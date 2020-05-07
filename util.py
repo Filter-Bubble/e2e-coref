@@ -50,6 +50,8 @@ def set_gpus(*gpus):
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(g) for g in gpus)
     print("Setting CUDA_VISIBLE_DEVICES to: {}".format(
         os.environ["CUDA_VISIBLE_DEVICES"]))
+    for gpu in tf.config.experimental.list_physical_devices('GPU'):
+        tf.config.experimental.set_memory_growth(gpu, True)
 
 
 def mkdirs(path):

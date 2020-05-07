@@ -8,7 +8,8 @@ import re
 import time
 import shutil
 
-import tensorflow as tf
+import tensorflow as tfimport tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import coref_model as cm
 import util
 
