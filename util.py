@@ -12,7 +12,8 @@ import shutil
 import sys
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import pyhocon
 
 
@@ -237,7 +238,7 @@ class EmbeddingDictionary(object):
             return v
 
 
-class CustomLSTMCell(tf.contrib.rnn.RNNCell):
+class CustomLSTMCell(tf.nn.rnn_cell.RNNCell):
     def __init__(self, num_units, batch_size, dropout):
         self._num_units = num_units
         self._dropout = dropout
@@ -249,12 +250,12 @@ class CustomLSTMCell(tf.contrib.rnn.RNNCell):
             "lstm_initial_cell_state", [1, self.output_size])
         initial_hidden_state = tf.get_variable(
             "lstm_initial_hidden_state", [1, self.output_size])
-        self._initial_state = tf.contrib.rnn.LSTMStateTuple(
+        self._initial_state = tf.nn.rnn_cell.LSTMStateTuple(
             initial_cell_state, initial_hidden_state)
 
     @property
     def state_size(self):
-        return tf.contrib.rnn.LSTMStateTuple(self.output_size, self.output_size)
+        return tf.nn.rnn_cell.LSTMStateTuple(self.output_size, self.output_size)
 
     @property
     def output_size(self):
@@ -275,7 +276,7 @@ class CustomLSTMCell(tf.contrib.rnn.RNNCell):
             i = tf.sigmoid(i)
             new_c = (1 - i) * c + i * tf.tanh(j)
             new_h = tf.tanh(new_c) * tf.sigmoid(o)
-            new_state = tf.contrib.rnn.LSTMStateTuple(new_c, new_h)
+            new_state = tf.nn.rnn_cell.LSTMStateTuple(new_c, new_h)
             return new_h, new_state
 
     def _orthonormal_initializer(self, scale=1.0):
