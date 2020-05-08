@@ -141,7 +141,7 @@ def handle_line(line, document_state, labels, stats):
         return finalized_state
     else:
         row = line.split()
-        if len(row) == 0:
+        if len(row) == 0 and len(document_state.text)>0:
             stats["max_sent_len"] = max(
                 len(document_state.text), stats["max_sent_len"])
             stats["num_sents"] += 1
@@ -149,6 +149,8 @@ def handle_line(line, document_state, labels, stats):
             del document_state.text[:]
             document_state.speakers.append(tuple(document_state.text_speakers))
             del document_state.text_speakers[:]
+            return None
+        elif len(row)==0 and len(document_state.text)==0:
             return None
         assert len(row) >= 4
 
