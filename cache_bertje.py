@@ -39,10 +39,12 @@ def cache_dataset(data_path, out_file, tokenizer, model):
                 bert_output, _ = model(tokens_tensor)
 
             file_key = example["doc_key"].replace("/", ":")
+            if file_key in out_file.keys():
+                del out_file[file_key]
             group = out_file.create_group(file_key)
             for i, (e, l) in enumerate(zip(bert_output, text_len)):
                 e = np.array(e[:l, :])
-                # Add extra dim because elmo has this 
+                # Add extra dim because elmo has this
                 e = np.expand_dims(e, axis=2)
                 group[str(i)] = e
             if doc_num % 10 == 0:
@@ -51,6 +53,6 @@ def cache_dataset(data_path, out_file, tokenizer, model):
 
 if __name__ == "__main__":
     tokenizer, model = load_bertje()
-    with h5py.File("bertje_cache.hdf5", "w") as out_file:
+    with h5py.File("bertje_cache.hdf5", "a") as out_file:
         for json_filename in sys.argv[1:]:
             cache_dataset(json_filename, out_file, tokenizer, model)

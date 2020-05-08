@@ -4,7 +4,8 @@ from __future__ import print_function
 
 from nltk.tokenize import sent_tokenize, word_tokenize
 from six.moves import input
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import coref_model as cm
 import util
 
