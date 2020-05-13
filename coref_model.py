@@ -638,23 +638,29 @@ class CorefModel(object):
                 predicted_antecedents.append(antecedents[i, index])
         return predicted_antecedents
 
-    def get_predicted_clusters(self, top_span_starts, top_span_ends, predicted_antecedents):
+    def get_predicted_clusters(self, top_span_starts, top_span_ends, predicted_antecedents, include_singletons=False):
         mention_to_predicted = {}
         predicted_clusters = []
         for i, predicted_index in enumerate(predicted_antecedents):
-            if predicted_index < 0:
-                continue
-            assert i > predicted_index
-            predicted_antecedent = (int(top_span_starts[predicted_index]), int(
-                top_span_ends[predicted_index]))
-            if predicted_antecedent in mention_to_predicted:
-                predicted_cluster = mention_to_predicted[predicted_antecedent]
-            else:
-                predicted_cluster = len(predicted_clusters)
-                predicted_clusters.append([predicted_antecedent])
-                mention_to_predicted[predicted_antecedent] = predicted_cluster
-
             mention = (int(top_span_starts[i]), int(top_span_ends[i]))
+            if predicted_index < 0: # Singleton clusters
+                if include_singletons:
+                    predicted_cluster = len(predicted_clusters)
+                    predicted_clusters.append([])
+                else:
+                    continue
+            else:
+                assert i > predicted_index
+                predicted_antecedent = (int(top_span_starts[predicted_index]), int(
+                    top_span_ends[predicted_index]))
+                if predicted_antecedent in mention_to_predicted:
+                    predicted_cluster = mention_to_predicted[predicted_antecedent]
+                else: # Also add antecedent to cluster
+                    predicted_cluster = len(predicted_clusters)
+                    predicted_clusters.append([predicted_antecedent])
+                    mention_to_predicted[predicted_antecedent] = predicted_cluster
+
+            # add current mention
             predicted_clusters[predicted_cluster].append(mention)
             mention_to_predicted[mention] = predicted_cluster
 
@@ -664,7 +670,8 @@ class CorefModel(object):
 
         return predicted_clusters, mention_to_predicted
 
-    def evaluate_coref(self, top_span_starts, top_span_ends, predicted_antecedents, gold_clusters, evaluator):
+
+    def evaluate_coref(self, top_span_starts, top_span_ends, predicted_antecedents, gold_clusters, evaluator, include_singletons=False):
         gold_clusters = [tuple(tuple(m) for m in gc) for gc in gold_clusters]
         mention_to_gold = {}
         for gc in gold_clusters:
@@ -672,7 +679,8 @@ class CorefModel(object):
                 mention_to_gold[mention] = gc
 
         predicted_clusters, mention_to_predicted = self.get_predicted_clusters(
-            top_span_starts, top_span_ends, predicted_antecedents)
+            top_span_starts, top_span_ends, predicted_antecedents,
+            include_singletons=include_singletons)
         evaluator.update(predicted_clusters, gold_clusters,
                          mention_to_predicted, mention_to_gold)
         return predicted_clusters
@@ -688,7 +696,7 @@ class CorefModel(object):
                             for tensorized_example, _ in self.eval_data)
             print("Loaded {} eval examples.".format(len(self.eval_data)))
 
-    def evaluate(self, session, official_stdout=False):
+    def evaluate(self, session, official_stdout=False, include_singletons=False):
         self.load_eval_data()
 
         coref_predictions = {}
@@ -703,7 +711,7 @@ class CorefModel(object):
             predicted_antecedents = self.get_predicted_antecedents(
                 top_antecedents, top_antecedent_scores)
             coref_predictions[example["doc_key"]] = self.evaluate_coref(
-                top_span_starts, top_span_ends, predicted_antecedents, example["clusters"], coref_evaluator)
+                top_span_starts, top_span_ends, predicted_antecedents, example["clusters"], coref_evaluator, include_singletons=include_singletons)
             if example_num % 10 == 0:
                 print("Evaluated {}/{} examples.".format(example_num +
                                                          1, len(self.eval_data)))
