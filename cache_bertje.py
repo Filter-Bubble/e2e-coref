@@ -22,15 +22,18 @@ def cache_dataset(data_path, out_file, tokenizer, model):
         for doc_num, line in enumerate(in_file.readlines()):
             example = json.loads(line)
             sentences = example["sentences"]
-            max_sentence_length = max(len(s) for s in sentences)
-            tokens = [[""] * max_sentence_length for _ in sentences]
-            text_len = np.array([len(s) for s in sentences])
-            for i, sentence in enumerate(sentences):
-                for j, word in enumerate(sentence):
-                    tokens[i][j] = word
 
-            # Encode
-            indexed_tokens = [tokenizer.convert_tokens_to_ids(t) for t in tokens]
+            # Use BERT tokenizer
+            sentences_tokenized = [[tokenizer.tokenize(word) for word in sentence] for sentence in sentences]
+            sentences_tokenized_flat = [[tok for word in sentence for tok in word] for sentence in sentences_tokenized]
+            indices_flat = [[i for i,word in enumerate(sentence) for tok in word] for sentence in sentences_tokenized]
+
+            max_nrtokens = max(len(s) for s in sentences_tokenized_flat)
+            indexed_tokens = np.zeros((len(sentences), max_nrtokens), dtype=int)
+            for i, sent in enumerate(sentences_tokenized_flat):
+                idx = tokenizer.convert_tokens_to_ids(sent)
+                indexed_tokens[i,:len(idx)] = np.array(idx)
+
             # Convert inputs to PyTorch tensors
             tokens_tensor = torch.tensor(indexed_tokens)
             with torch.no_grad():
@@ -38,11 +41,22 @@ def cache_dataset(data_path, out_file, tokenizer, model):
                 # (nr_sentences, sequence_length, hidden_size=768
                 bert_output, _ = model(tokens_tensor)
 
+            # Add up tensors for subtokens coming from same word
+            max_sentence_length = max(len(s) for s in sentences)
+            bert_final = torch.tensor(np.zeros((bert_output.shape[0],
+                                                max_sentence_length,
+                                                bert_output.shape[2])))
+            for sent_id in range(len(sentences)):
+                for tok_id, word_id in enumerate(indices_flat[sent_id]):
+                    bert_final[sent_id, word_id, :] += bert_output[i,tok_id,:]
+
+            text_len = np.array([len(s) for s in sentences])
+
             file_key = example["doc_key"].replace("/", ":")
             if file_key in out_file.keys():
                 del out_file[file_key]
             group = out_file.create_group(file_key)
-            for i, (e, l) in enumerate(zip(bert_output, text_len)):
+            for i, (e, l) in enumerate(zip(bert_final, text_len)):
                 e = np.array(e[:l, :])
                 # Add extra dim because elmo has this
                 e = np.expand_dims(e, axis=2)
