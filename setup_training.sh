@@ -16,7 +16,7 @@ python minimize.py dev.dutch.conll
 
 python get_char_vocab.py
 
-python filter_embeddings.py combined-320.txt train.dutch.jsonlines dev.dutch.jsonlines
+python filter_embeddings.py false combined-320.txt train.dutch.jsonlines dev.dutch.jsonlines
 
 # If using bertje, need to install transformers
 python cache_bertje.py train.dutch.jsonlines dev.dutch.jsonlines

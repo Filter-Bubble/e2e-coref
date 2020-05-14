@@ -197,6 +197,7 @@ class EmbeddingDictionary(object):
         self._size = info["size"]
         self._normalize = normalize
         self._path = info["path"]
+        self._cased = info["cased"] if "cased" in info else True
         if maybe_cache is not None and maybe_cache._path == self._path:
             assert self._size == maybe_cache._size
             self._embeddings = maybe_cache._embeddings
@@ -227,6 +228,8 @@ class EmbeddingDictionary(object):
         return embedding_dict
 
     def __getitem__(self, key):
+        if not self._cased:
+            key = key.lower()
         embedding = self._embeddings[key]
         if self._normalize:
             embedding = self.normalize(embedding)
