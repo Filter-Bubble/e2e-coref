@@ -4,15 +4,15 @@ from __future__ import print_function
 
 import numpy as np
 import torch
-from transformers import BertTokenizer, BertModel
+from transformers import RobertaTokenizer, RobertaModel
 import h5py
 import json
 import sys
 
 
 def load_bertje():
-    tokenizer = BertTokenizer.from_pretrained("bert-base-dutch-cased")
-    model = BertModel.from_pretrained("bert-base-dutch-cased")
+    tokenizer = RobertaTokenizer.from_pretrained("pdelobelle/robBERT-base")
+    model = RobertaModel.from_pretrained("pdelobelle/robBERT-base")
     model.eval()
     return tokenizer, model
 
@@ -67,6 +67,6 @@ def cache_dataset(data_path, out_file, tokenizer, model):
 
 if __name__ == "__main__":
     tokenizer, model = load_bertje()
-    with h5py.File("bertje_cache.hdf5", "a") as out_file:
+    with h5py.File("robbert_cache.hdf5", "a") as out_file:
         for json_filename in sys.argv[1:]:
             cache_dataset(json_filename, out_file, tokenizer, model)
