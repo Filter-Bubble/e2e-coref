@@ -8,6 +8,8 @@ glove*.txt
 glove*.txt.filtered
 combined-320.txt
 combined-320.txt.filtered
+fasttext.model.vec
+fasttext.model.vec.filtered
 *.v*_*_conll
 *.conll
 *.hdf5
