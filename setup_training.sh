@@ -19,4 +19,4 @@ python get_char_vocab.py
 python filter_embeddings.py false combined-320.txt train.dutch.jsonlines dev.dutch.jsonlines
 
 # If using bertje, need to install transformers
-python cache_bertje.py train.dutch.jsonlines dev.dutch.jsonlines
+python cache_bert.py bertje train.dutch.jsonlines dev.dutch.jsonlines
