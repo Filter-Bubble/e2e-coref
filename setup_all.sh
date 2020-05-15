@@ -6,6 +6,9 @@
 # mv 320/combined-320.txt combined-320.txt
 # rm -rf 320/
 # rm combined-320.tar.gz
+wget https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.nl.300.vec.gz
+gzip -d cc.nl.300.vec.gz
+mv cc.nl.300.vec fasttext.300.vec
 
 # Build custom kernels.
 TF_CFLAGS=( $(python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))') )

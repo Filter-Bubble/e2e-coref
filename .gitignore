@@ -10,6 +10,8 @@ combined-320.txt
 combined-320.txt.filtered
 fasttext.model.vec
 fasttext.model.vec.filtered
+fasttext.300.vec
+fasttext.300.vec.filtered
 *.v*_*_conll
 *.conll
 *.hdf5
