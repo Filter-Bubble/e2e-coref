@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import numpy as np
 import torch
-from transformers import RobertaTokenizer, RobertaModel, BertTokenizer, BertModel, model = BertForPreTraining
+from transformers import RobertaTokenizer, RobertaModel, BertTokenizer, BertModel, BertForPreTraining
 import h5py
 import json
 import sys
