@@ -17,6 +17,9 @@ def load_bert(model_name):
     elif model_name == 'bertje':
         tokenizer = BertTokenizer.from_pretrained("bert-base-dutch-cased")
         model = BertModel.from_pretrained("bert-base-dutch-cased")
+    elif model_name == 'bert-nl':
+        tokenizer = BertTokenizer.from_pretrained("data/bert-nl")
+        model = BertModel.from_pretrained("data/bert-nl")
     else:
         raise ValueError('invalid model name')
     model.eval()
@@ -78,6 +81,6 @@ def cache_dataset(data_path, out_file, tokenizer, model):
 if __name__ == "__main__":
     model_name = sys.argv[1]
     tokenizer, model = load_bert(model_name)
-    with h5py.File("{}_cache.hdf5".format(model_name), "a") as out_file:
+    with h5py.File("data/{}_cache.hdf5".format(model_name), "a") as out_file:
         for json_filename in sys.argv[2:]:
             cache_dataset(json_filename, out_file, tokenizer, model)

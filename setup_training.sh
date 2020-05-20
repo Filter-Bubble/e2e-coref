@@ -11,12 +11,12 @@ mkdir conll-2012
 mv reference-coreference-scorers conll-2012/scorer
 
 # TODO: download data
-python minimize.py train.dutch.conll
-python minimize.py dev.dutch.conll
+python minimize.py data/train.dutch.conll
+python minimize.py data/dev.dutch.conll
 
 python get_char_vocab.py
 
-python filter_embeddings.py false combined-320.txt train.dutch.jsonlines dev.dutch.jsonlines
+python filter_embeddings.py false data/combined-320.txt data/train.dutch.jsonlines data/dev.dutch.jsonlines
 
 # If using bertje, need to install transformers
-python cache_bert.py bertje train.dutch.jsonlines dev.dutch.jsonlines
+python cache_bert.py bertje data/train.dutch.jsonlines data/dev.dutch.jsonlines
