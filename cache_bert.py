@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import numpy as np
 import torch
-from transformers import RobertaTokenizer, RobertaModel, BertTokenizer, BertModel
+from transformers import RobertaTokenizer, RobertaModel, BertTokenizer, BertModel, model = BertForPreTraining
 import h5py
 import json
 import sys
@@ -19,7 +19,7 @@ def load_bert(model_name):
         model = BertModel.from_pretrained("bert-base-dutch-cased")
     elif model_name == 'bert-nl':
         tokenizer = BertTokenizer.from_pretrained("data/bert-nl")
-        model = BertModel.from_pretrained("data/bert-nl")
+        model = BertForPreTraining.from_pretrained("data/bert-nl").bert
     else:
         raise ValueError('invalid model name')
     model.eval()
