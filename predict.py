@@ -20,7 +20,7 @@ if __name__ == "__main__":
     output_filename = sys.argv[3]
 
     model = cm.CorefModel(config)
-
+    include_singletons = config['include_singletons']
     with tf.Session() as session:
         model.restore(session)
 
@@ -37,7 +37,8 @@ if __name__ == "__main__":
                     predicted_antecedents = model.get_predicted_antecedents(
                         top_antecedents, top_antecedent_scores)
                     example["predicted_clusters"], _ = model.get_predicted_clusters(
-                        top_span_starts, top_span_ends, predicted_antecedents)
+                        top_span_starts, top_span_ends, predicted_antecedents,
+                        include_singletons=include_singletons)
 
                     output_file.write(json.dumps(example))
                     output_file.write("\n")
