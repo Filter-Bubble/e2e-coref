@@ -6,7 +6,7 @@ import tensorflow as tf
 import util
 
 if __name__ == "__main__":
-    config = util.initialize_from_env()
+    config = util.initialize_from_env(sys.argv[1])
     report_frequency = config["report_frequency"]
     cluster_config = config["cluster"]
     util.set_gpus()

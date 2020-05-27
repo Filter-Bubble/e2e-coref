@@ -4,3 +4,5 @@
 logs
 conll-2012
 data/
+.ipynb_checkpoints/
+*.ipynb

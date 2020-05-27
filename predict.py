@@ -11,7 +11,7 @@ import coref_model as cm
 import util
 
 if __name__ == "__main__":
-    config = util.initialize_from_env()
+    config = util.initialize_from_env(sys.argv[1])
 
     # Input file in .jsonlines format.
     input_filename = sys.argv[2]

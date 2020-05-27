@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
@@ -11,7 +12,7 @@ import coref_model as cm
 import util
 
 if __name__ == "__main__":
-    config = util.initialize_from_env()
+    config = util.initialize_from_env(sys.argv[1])
     model = cm.CorefModel(config)
     include_singletons = config['include_singletons']
     with tf.Session() as session:

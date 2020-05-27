@@ -12,7 +12,7 @@ import coref_model as cm
 import util
 
 if __name__ == "__main__":
-    config = util.initialize_from_env()
+    config = util.initialize_from_env(sys.argv[1])
     task_index = int(os.environ["TASK"])
 
     report_frequency = config["report_frequency"]

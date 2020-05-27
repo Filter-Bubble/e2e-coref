@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
 import time
 
 #import tensorflow as tf
@@ -13,7 +14,7 @@ import coref_model as cm
 import util
 
 if __name__ == "__main__":
-    config = util.initialize_from_env()
+    config = util.initialize_from_env(sys.argv[1])
 
     report_frequency = config["report_frequency"]
     eval_frequency = config["eval_frequency"]

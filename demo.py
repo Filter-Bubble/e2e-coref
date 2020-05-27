@@ -51,7 +51,7 @@ def make_predictions(text, model):
 
 
 if __name__ == "__main__":
-    config = util.initialize_from_env()
+    config = util.initialize_from_env(sys.argv[1])
     model = cm.CorefModel(config)
     with tf.Session() as session:
         model.restore(session)

@@ -17,13 +17,13 @@ tf.disable_v2_behavior()
 import pyhocon
 
 
-def initialize_from_env():
+def initialize_from_env(name):
     if "GPU" in os.environ:
         set_gpus(int(os.environ["GPU"]))
     else:
         set_gpus()
 
-    name = sys.argv[1]
+    
     print("Running experiment: {}".format(name))
 
     config = pyhocon.ConfigFactory.parse_file("experiments.conf")[name]

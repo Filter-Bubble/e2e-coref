@@ -20,7 +20,7 @@ def copy_checkpoint(source, target):
 
 
 if __name__ == "__main__":
-    config = util.initialize_from_env()
+    config = util.initialize_from_env(sys.argv[1])
     model = cm.CorefModel(config)
 
     saver = tf.train.Saver()
