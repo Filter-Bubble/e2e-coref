@@ -8,6 +8,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import coref_model as cm
 import util
+import sys
 
 import nltk
 nltk.download("punkt")

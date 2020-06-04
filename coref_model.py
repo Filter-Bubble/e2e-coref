@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
 import operator
 import random
 import math
@@ -380,24 +381,35 @@ class CorefModel(object):
         candidate_mention_scores = tf.squeeze(
             candidate_mention_scores, 1)  # [k]
 
-        k = tf.to_int32(tf.floor(tf.to_float(
-            tf.shape(context_outputs)[0]) * self.config["top_span_ratio"]))
-        top_span_indices = coref_ops.extract_spans(tf.expand_dims(candidate_mention_scores, 0),
-                                                   tf.expand_dims(
-                                                       candidate_starts, 0),
-                                                   tf.expand_dims(
-                                                       candidate_ends, 0),
-                                                   tf.expand_dims(k, 0),
-                                                   util.shape(
-                                                       context_outputs, 0),
-                                                   True)  # [1, k]
-        top_span_indices.set_shape([1, None])
-        top_span_indices = tf.squeeze(top_span_indices, 0)  # [k]
+        use_gold = self.config['use_gold'] if 'use_gold' in self.config else False
+        if use_gold:
+            candidates_spans = tf.stack([candidate_starts, candidate_ends], axis=1)
+            gold_spans = tf.stack([gold_starts, gold_ends], axis=1)
+            same_span = tf.equal(tf.expand_dims(gold_spans, 1), tf.expand_dims(candidates_spans, 0))
+            top_span_indices = tf.reduce_any(tf.reduce_all(same_span, axis=2), axis=0)
+            top_span_indices = tf.squeeze(tf.where(top_span_indices), axis=1)
+            k = tf.cast(util.shape(top_span_indices, 0), tf.int32)
+
+        else:
+            k = tf.to_int32(tf.floor(tf.to_float(
+                tf.shape(context_outputs)[0]) * self.config["top_span_ratio"]))
+            top_span_indices = coref_ops.extract_spans(tf.expand_dims(candidate_mention_scores, 0),
+                                                       tf.expand_dims(
+                                                           candidate_starts, 0),
+                                                       tf.expand_dims(
+                                                           candidate_ends, 0),
+                                                       tf.expand_dims(k, 0),
+                                                       util.shape(
+                                                           context_outputs, 0),
+                                                       True)  # [1, k]
+            top_span_indices.set_shape([1, None])
+            top_span_indices = tf.squeeze(top_span_indices, 0)  # [k]
 
         top_span_starts = tf.gather(candidate_starts, top_span_indices)  # [k]
         top_span_ends = tf.gather(candidate_ends, top_span_indices)  # [k]
         top_span_emb = tf.gather(
             candidate_span_emb, top_span_indices)  # [k, emb]
+
         top_span_cluster_ids = tf.gather(
             candidate_cluster_ids, top_span_indices)  # [k]
         top_span_mention_scores = tf.gather(
@@ -414,7 +426,6 @@ class CorefModel(object):
         else:
             top_antecedents, top_antecedents_mask, top_fast_antecedent_scores, top_antecedent_offsets = self.distance_pruning(
                 top_span_emb, top_span_mention_scores, c)
-
         dummy_scores = tf.zeros([k, 1])  # [k, 1]
         for i in range(self.config["coref_depth"]):
             with tf.variable_scope("coref_layer", reuse=(i > 0)):
