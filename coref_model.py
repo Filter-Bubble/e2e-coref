@@ -426,7 +426,8 @@ class CorefModel(object):
         else:
             top_antecedents, top_antecedents_mask, top_fast_antecedent_scores, top_antecedent_offsets = self.distance_pruning(
                 top_span_emb, top_span_mention_scores, c)
-        dummy_scores = tf.zeros([k, 1])  # [k, 1]
+        dummy_scores_nomention = tf.zeros([k, 1])  # [k, 1]
+        dummy_scores_first = tf.zeros([k, 1])  # [k, 1]
         for i in range(self.config["coref_depth"]):
             with tf.variable_scope("coref_layer", reuse=(i > 0)):
                 top_antecedent_emb = tf.gather(
@@ -434,9 +435,9 @@ class CorefModel(object):
                 top_antecedent_scores = top_fast_antecedent_scores + self.get_slow_antecedent_scores(
                     top_span_emb, top_antecedents, top_antecedent_emb, top_antecedent_offsets, top_span_speaker_ids, genre_emb)  # [k, c]
                 top_antecedent_weights = tf.nn.softmax(
-                    tf.concat([dummy_scores, top_antecedent_scores], 1))  # [k, c + 1]
+                    tf.concat([dummy_scores_nomention, dummy_scores_first, top_antecedent_scores], 1))  # [k, c + 2]
                 top_antecedent_emb = tf.concat(
-                    [tf.expand_dims(top_span_emb, 1), top_antecedent_emb], 1)  # [k, c + 1, emb]
+                    [tf.expand_dims(top_span_emb, 1), tf.expand_dims(top_span_emb, 1), top_antecedent_emb], 1)  # [k, c + 1, emb]
                 attended_span_emb = tf.reduce_sum(tf.expand_dims(
                     top_antecedent_weights, 2) * top_antecedent_emb, 1)  # [k, emb]
                 with tf.variable_scope("f"):
@@ -446,7 +447,7 @@ class CorefModel(object):
                         (1 - f) * top_span_emb  # [k, emb]
 
         top_antecedent_scores = tf.concat(
-            [dummy_scores, top_antecedent_scores], 1)  # [k, c + 1]
+            [dummy_scores_nomention, dummy_scores_first, top_antecedent_scores], 1)  # [k, c + 2]
 
         top_antecedent_cluster_ids = tf.gather(
             top_span_cluster_ids, top_antecedents)  # [k, c]
@@ -459,10 +460,12 @@ class CorefModel(object):
             top_span_cluster_ids > 0, 1)  # [k, 1]
         pairwise_labels = tf.logical_and(
             same_cluster_indicator, non_dummy_indicator)  # [k, c]
-        dummy_labels = tf.logical_not(tf.reduce_any(
-            pairwise_labels, 1, keepdims=True))  # [k, 1]
+        dummy_labels_nomention = tf.expand_dims(tf.equal(top_span_cluster_ids, 0), 1) # [k, 1]
+        dummy_labels_first = tf.logical_not(tf.reduce_any(
+            tf.concat(
+                [dummy_labels_nomention, pairwise_labels], 1), 1, keepdims=True))  # [k, 1]
         top_antecedent_labels = tf.concat(
-            [dummy_labels, pairwise_labels], 1)  # [k, c + 1]
+            [dummy_labels_nomention, dummy_labels_first, pairwise_labels], 1)  # [k, c + 1]
         loss = self.softmax_loss(
             top_antecedent_scores, top_antecedent_labels)  # [k]
         loss = tf.reduce_sum(loss)  # []
@@ -642,9 +645,9 @@ class CorefModel(object):
 
     def get_predicted_antecedents(self, antecedents, antecedent_scores):
         predicted_antecedents = []
-        for i, index in enumerate(np.argmax(antecedent_scores, axis=1) - 1):
+        for i, index in enumerate(np.argmax(antecedent_scores, axis=1) - 2):
             if index < 0:
-                predicted_antecedents.append(-1)
+                predicted_antecedents.append(index)
             else:
                 predicted_antecedents.append(antecedents[i, index])
         return predicted_antecedents
@@ -654,12 +657,11 @@ class CorefModel(object):
         predicted_clusters = []
         for i, predicted_index in enumerate(predicted_antecedents):
             mention = (int(top_span_starts[i]), int(top_span_ends[i]))
-            if predicted_index < 0: # Singleton clusters
-                if include_singletons:
-                    predicted_cluster = len(predicted_clusters)
-                    predicted_clusters.append([])
-                else:
-                    continue
+            if predicted_index == -1: # First mention of cluster
+                predicted_cluster = len(predicted_clusters)
+                predicted_clusters.append([])
+            elif predicted_index == -2: # No mention, disregard
+                continue
             else:
                 assert i > predicted_index
                 predicted_antecedent = (int(top_span_starts[predicted_index]), int(
