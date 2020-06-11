@@ -350,26 +350,34 @@ class CorefModel(object):
             sentence_indices, text_len_mask)  # [num_words]
         flattened_head_emb = self.flatten_emb_by_sentence(
             head_emb, text_len_mask)  # [num_words]
-
-        candidate_starts = tf.tile(tf.expand_dims(tf.range(num_words), 1), [
+        if self.config['use_gold']:
+            candidate_starts = gold_starts
+            candidate_ends = gold_ends
+            candidate_start_sentence_indices = tf.gather(
+                flattened_sentence_indices, candidate_starts)  # [num_words]
+            candidate_end_sentence_indices = tf.gather(flattened_sentence_indices, tf.minimum(
+                candidate_ends, num_words - 1))  # [num_words]
+            candidate_sentence_indices = candidate_start_sentence_indices
+        else:
+            candidate_starts = tf.tile(tf.expand_dims(tf.range(num_words), 1), [
                                    1, self.max_span_width])  # [num_words, max_span_width]
-        candidate_ends = candidate_starts + \
-            tf.expand_dims(tf.range(self.max_span_width),
+            candidate_ends = candidate_starts + \
+                tf.expand_dims(tf.range(self.max_span_width),
                            0)  # [num_words, max_span_width]
-        candidate_start_sentence_indices = tf.gather(
-            flattened_sentence_indices, candidate_starts)  # [num_words, max_span_width]
-        candidate_end_sentence_indices = tf.gather(flattened_sentence_indices, tf.minimum(
-            candidate_ends, num_words - 1))  # [num_words, max_span_width]
-        candidate_mask = tf.logical_and(candidate_ends < num_words, tf.equal(
-            candidate_start_sentence_indices, candidate_end_sentence_indices))  # [num_words, max_span_width]
-        flattened_candidate_mask = tf.reshape(
-            candidate_mask, [-1])  # [num_words * max_span_width]
-        candidate_starts = tf.boolean_mask(tf.reshape(
-            candidate_starts, [-1]), flattened_candidate_mask)  # [num_candidates]
-        candidate_ends = tf.boolean_mask(tf.reshape(
-            candidate_ends, [-1]), flattened_candidate_mask)  # [num_candidates]
-        candidate_sentence_indices = tf.boolean_mask(tf.reshape(
-            candidate_start_sentence_indices, [-1]), flattened_candidate_mask)  # [num_candidates]
+            candidate_start_sentence_indices = tf.gather(
+                flattened_sentence_indices, candidate_starts)  # [num_words, max_span_width]
+            candidate_end_sentence_indices = tf.gather(flattened_sentence_indices, tf.minimum(
+                candidate_ends, num_words - 1))  # [num_words, max_span_width]
+            candidate_mask = tf.logical_and(candidate_ends < num_words, tf.equal(
+                candidate_start_sentence_indices, candidate_end_sentence_indices))  # [num_words, max_span_width]
+            flattened_candidate_mask = tf.reshape(
+                candidate_mask, [-1])  # [num_words * max_span_width]
+            candidate_starts = tf.boolean_mask(tf.reshape(
+                candidate_starts, [-1]), flattened_candidate_mask)  # [num_candidates]
+            candidate_ends = tf.boolean_mask(tf.reshape(
+                candidate_ends, [-1]), flattened_candidate_mask)  # [num_candidates]
+            candidate_sentence_indices = tf.boolean_mask(tf.reshape(
+                candidate_start_sentence_indices, [-1]), flattened_candidate_mask)  # [num_candidates]
 
         candidate_cluster_ids = self.get_candidate_labels(
             candidate_starts, candidate_ends, gold_starts, gold_ends, cluster_ids)  # [num_candidates]
@@ -381,8 +389,7 @@ class CorefModel(object):
         candidate_mention_scores = tf.squeeze(
             candidate_mention_scores, 1)  # [k]
 
-        use_gold = self.config['use_gold'] if 'use_gold' in self.config else False
-        if use_gold:
+        if self.config['use_gold']:
             candidates_spans = tf.stack([candidate_starts, candidate_ends], axis=1)
             gold_spans = tf.stack([gold_starts, gold_ends], axis=1)
             same_span = tf.equal(tf.expand_dims(gold_spans, 1), tf.expand_dims(candidates_spans, 0))
@@ -478,7 +485,7 @@ class CorefModel(object):
         span_end_emb = tf.gather(context_outputs, span_ends)  # [k, emb]
         span_emb_list.append(span_end_emb)
 
-        span_width = 1 + span_ends - span_starts  # [k]
+        span_width = tf.minimum(1 + span_ends - span_starts, self.max_span_width)  # [k]
 
         if self.config["use_features"]:
             span_width_index = span_width - 1  # [k]
