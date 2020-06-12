@@ -351,8 +351,12 @@ class CorefModel(object):
         flattened_head_emb = self.flatten_emb_by_sentence(
             head_emb, text_len_mask)  # [num_words]
         if self.config['use_gold']:
-            candidate_starts = gold_starts
-            candidate_ends = gold_ends
+            # Filter on span length, only during training time
+            candidate_mask = tf.less_equal(gold_ends - gold_starts + 1, self.max_span_width)
+            candidate_mask = tf.logical_or(candidate_mask, tf.logical_not(is_training))
+            candidate_starts = tf.boolean_mask(gold_starts, candidate_mask)
+            candidate_ends = tf.boolean_mask(gold_ends, candidate_mask)
+
             candidate_start_sentence_indices = tf.gather(
                 flattened_sentence_indices, candidate_starts)  # [num_words]
             candidate_end_sentence_indices = tf.gather(flattened_sentence_indices, tf.minimum(
