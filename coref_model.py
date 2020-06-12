@@ -426,7 +426,7 @@ class CorefModel(object):
         else:
             top_antecedents, top_antecedents_mask, top_fast_antecedent_scores, top_antecedent_offsets = self.distance_pruning(
                 top_span_emb, top_span_mention_scores, c)
-        dummy_scores_nomention = tf.zeros([k, 1])  # [k, 1]
+        dummy_scores_nomention = tf.expand_dims(top_span_mention_scores*-1, 1)#tf.zeros([k, 1])  # [k, 1]
         dummy_scores_first = tf.zeros([k, 1])  # [k, 1]
         for i in range(self.config["coref_depth"]):
             with tf.variable_scope("coref_layer", reuse=(i > 0)):
